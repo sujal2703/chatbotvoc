@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback Summary — AI Assistant</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-mark">AI//A</div>
+    <div>
+      <h1>Feedback Summary</h1>
+      <p class="subtitle">What's actually landing, by function and prompt style.</p>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <a href="{{ url_for('index') }}" class="back-link">← Back to assistant</a>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-number">{{ total }}</div>
+      <div class="stat-label">Total responses rated</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ helpful_count }}</div>
+      <div class="stat-label">Marked helpful</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ helpful_pct }}%</div>
+      <div class="stat-label">Overall helpful rate</div>
+    </div>
+  </div>
+
+  {% if total == 0 %}
+    <p class="empty-note">No feedback recorded yet. Go run the assistant and rate a few responses first.</p>
+  {% else %}
+
+    <section class="panel panel-full">
+      <h2 class="section-title">By function</h2>
+      <table class="stat-table">
+        <thead>
+          <tr><th>Function</th><th>Responses</th><th>Helpful</th><th>Rate</th></tr>
+        </thead>
+        <tbody>
+          {% for label, stats in by_function.items() %}
+          <tr>
+            <td>{{ label }}</td>
+            <td>{{ stats.total }}</td>
+            <td>{{ stats.helpful }}</td>
+            <td>{{ stats.pct }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel panel-full">
+      <h2 class="section-title">By prompt variant</h2>
+      <table class="stat-table">
+        <thead>
+          <tr><th>Function — Variant</th><th>Responses</th><th>Helpful</th><th>Rate</th></tr>
+        </thead>
+        <tbody>
+          {% for label, stats in by_prompt_variant.items() %}
+          <tr>
+            <td>{{ label }}</td>
+            <td>{{ stats.total }}</td>
+            <td>{{ stats.helpful }}</td>
+            <td>{{ stats.pct }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="hint">This is the "use feedback to refine prompt design" loop: if one variant's rate is consistently lower, that's the one to revise or drop.</p>
+    </section>
+
+  {% endif %}
+
+</div>
+
+</body>
+</html>

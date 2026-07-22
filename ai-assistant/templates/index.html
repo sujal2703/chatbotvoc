@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Assistant</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-mark">AI//A</div>
+    <div>
+      <h1>AI Assistant</h1>
+      <p class="subtitle">Pick a task, pick a prompt style, run it.</p>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="layout">
+
+    <section class="panel panel-main">
+
+      <form method="POST" action="{{ url_for('index') }}" class="query-form">
+
+        <div class="field-group">
+          <label class="field-label">01 — Function</label>
+          <div class="pill-row">
+            {% for key, cfg in functions.items() %}
+              <label class="pill {{ 'pill-active' if key == selected_function }}">
+                <input
+                  type="radio"
+                  name="function_key"
+                  value="{{ key }}"
+                  onchange="this.form.submit()"
+                  {{ 'checked' if key == selected_function }}
+                >
+                {{ cfg.label }}
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">02 — Prompt style</label>
+          <div class="pill-row">
+            {% for variant_key, variant in function_config.prompts.items() %}
+              <label class="pill pill-variant {{ 'pill-active' if variant_key == selected_prompt_variant }}">
+                <input
+                  type="radio"
+                  name="prompt_variant"
+                  value="{{ variant_key }}"
+                  {{ 'checked' if variant_key == selected_prompt_variant }}
+                >
+                {{ variant.label }}
+              </label>
+            {% endfor %}
+          </div>
+          <p class="hint">Different prompt styles nudge the model toward different length, tone, or structure — try a couple and compare.</p>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="user-input">03 — Your input</label>
+          {% if function_config.field_type == 'textarea' %}
+            <textarea
+              id="user-input"
+              name="{{ function_config.field_name }}"
+              placeholder="{{ function_config.field_placeholder }}"
+              rows="6"
+            >{{ user_input }}</textarea>
+          {% else %}
+            <input
+              id="user-input"
+              type="text"
+              name="{{ function_config.field_name }}"
+              placeholder="{{ function_config.field_placeholder }}"
+              value="{{ user_input }}"
+            >
+          {% endif %}
+        </div>
+
+        <button type="submit" class="run-button">Run assistant →</button>
+      </form>
+
+      {% if error_message %}
+        <div class="response-box response-error">
+          <div class="response-label">Error</div>
+          <p>{{ error_message }}</p>
+        </div>
+      {% endif %}
+
+      {% if response_text %}
+        <div class="response-box">
+          <div class="response-label">Response</div>
+          <p class="response-text">{{ response_text }}</p>
+
+          <form method="POST" action="{{ url_for('submit_feedback') }}" class="feedback-form">
+            <input type="hidden" name="response_id" value="{{ response_id }}">
+            <span class="feedback-prompt">Was this response helpful?</span>
+            <button type="submit" name="was_helpful" value="yes" class="feedback-btn feedback-yes">Yes</button>
+            <button type="submit" name="was_helpful" value="no" class="feedback-btn feedback-no">No</button>
+          </form>
+        </div>
+      {% endif %}
+
+    </section>
+
+    <aside class="panel panel-side">
+      <div class="side-header">
+        <span>Session history</span>
+        <a href="{{ url_for('feedback_summary') }}" class="side-link">Feedback summary →</a>
+      </div>
+
+      {% if history %}
+        <ul class="history-list">
+          {% for item in history %}
+            <li class="history-item">
+              <div class="history-meta">{{ item.function_label }} · {{ item.prompt_variant_label }}</div>
+              <div class="history-input">"{{ item.user_input[:70] }}{% if item.user_input|length > 70 %}…{% endif %}"</div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-note">Nothing run yet this session — your queries will show up here as you go.</p>
+      {% endif %}
+    </aside>
+
+  </div>
+
+</div>
+
+</body>
+</html>
